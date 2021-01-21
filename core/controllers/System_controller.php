@@ -159,35 +159,11 @@ class System_controller extends Controller
 	{
 		if ( Format::exist_ajax_request() )
 		{
-			$upload = new Upload();
-			$upload->set_file_name($_FILES['image']['name']);
-			$upload->set_temp_name($_FILES['image']['tmp_name']);
-			$upload->set_file_type($_FILES['image']['type']);
-			$upload->set_file_size($_FILES['image']['size']);
-			$upload->set_valid_extensions(['jpeg', 'jpg', 'png']);
-			$upload->set_configs(['tmp' => true]);
+			$image = Upload::validate_file($_FILES['image'], ['jpg', 'jpeg', 'png']);
 
-			if ( isset($_POST['add_temp']) )
-				$image = $upload->copy();
-			else
-				$image = $upload->validation();
-
-			if ( $image['status'] == 'success' )
+			if ( $image['status'] == 'OK' )
 			{
 				$token = $this->security->random_string('5');
-
-				if ( isset($_POST['add_temp']) )
-				{
-					if ( Session::exists_var('__vkye_tmp_images_arr') )
-						$arr = Session::get_value('__vkye_tmp_images_arr');
-					else
-						$arr = [];
-
-					unset($image['status']);
-
-					$arr[$token] = $image;
-					Session::set_value('__vkye_tmp_images_arr', $arr);
-				}
 
 				echo json_encode([
 					'status' => 'OK',
@@ -202,19 +178,5 @@ class System_controller extends Controller
 				], JSON_PRETTY_PRINT);
 			}
 		}
-	}
-
-	public function delete_preloaded_image()
-	{
-		header('Content-type: application/json');
-
-		$gallery = Session::get_value('__vkye_tmp_images_arr');
-
-		unlink($gallery[$_POST['token']]['route']);
-		unset($_SESSION['__vkye_tmp_images_arr'][$_POST['token']]);
-
-		echo json_encode([
-			'status' => 'OK',
-		], JSON_PRETTY_PRINT);
 	}
 }

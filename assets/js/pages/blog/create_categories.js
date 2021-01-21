@@ -4,24 +4,30 @@ $( document ).ready(function ()
         url: 'index.php?c=blog&m=create_category',
         callback: function( response )
         {
-            swal({
-                title: 'Se agregó la categoría.',
-                type: 'success',
-                showLoaderOnConfirm: true,
-                allowOutsideClick: false,
-                preConfirm: function ()
-                {
-                    return new Promise(function (resolve)
-                    {
-                        window.location.href = response.redirect;
+            if ( response.status == 'fatal_error' )
+                alertify.error(response.message);
 
-                        setTimeout(function ()
+            if ( response.status == 'OK' )
+            {
+                swal({
+                    title: 'Se agregó la categoría.',
+                    type: 'success',
+                    showLoaderOnConfirm: true,
+                    allowOutsideClick: false,
+                    preConfirm: function ()
+                    {
+                        return new Promise(function (resolve)
                         {
-                            resolve();
-                        }, 5000);
-                    });
-                }
-            });
+                            window.location.href = response.redirect;
+
+                            setTimeout(function ()
+                            {
+                                resolve();
+                            }, 5000);
+                        });
+                    }
+                });
+            }
         }
     });
 });

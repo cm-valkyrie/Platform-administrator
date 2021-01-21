@@ -29,7 +29,7 @@ CREATE TABLE `blog` (
 --
 
 INSERT INTO `blog` (`id`, `url`, `title`, `id_category`, `image`, `article`, `sm_title`, `sm_description`, `sm_image`, `tags`, `status`, `publication_date`, `author`) VALUES
-(1, 'Hello-world', 'a:1:{s:2:\"es\";s:11:\"Hello world\";}', NULL, '1_VR1dh5_eGjIQC7zhGTyCGA_rl2M2D.png', '{\"es\":\"<p>&iexcl;Hola mundo!<\\/p>\"}', 'a:1:{s:2:\"es\";N;}', 'a:1:{s:2:\"es\";N;}', NULL, NULL, 'published', '2020-06-29 16:32:04', 1);
+(1, 'Hello-world', 'a:1:{s:2:\"es\";s:11:\"Hello world\";}', NULL, 'img-test-2_t19h1NVK.jpg', 'a:1:{s:2:"es";s:42:""<p>Hola mundo desde mi primer blog!<\/p>"";}', 'a:1:{s:2:\"es\";N;}', 'a:1:{s:2:\"es\";N;}', NULL, NULL, 'published', '2020-06-29 16:32:04', 1);
 
 -- --------------------------------------------------------
 

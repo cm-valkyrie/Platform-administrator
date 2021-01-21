@@ -25,29 +25,37 @@ class Blog_controller extends Controller
 		$post['category'] = ( isset($_POST['category']) && !empty($_POST['category']) ) ? $_POST['category'] : null;
 		$post['description'] = ( isset($_POST['description']) && !empty($_POST['description']) ) ? $_POST['description'] : null;
 		$post['tags'] = ( isset($_POST['tags']) && !empty($_POST['tags']) ) ? trim($_POST['tags']) : null;
-		$post['image_cover'] = ( isset($_FILES['image_cover']) && $_FILES['image_cover']['error'] == 0 && $_FILES['image_cover']['size'] > 0 ) ? $_FILES['image_cover'] : null;
+		$post['image_cover'] = ( isset($_FILES['image_cover']) && !empty($_FILES['image_cover']) ) ? $_FILES['image_cover'] : null;
 		$post['sm_title'] = ( isset($_POST['sm_title']) && !empty($_POST['sm_title']) ) ? $_POST['sm_title'] : null;
 		$post['sm_description'] = ( isset($_POST['sm_description']) && !empty($_POST['sm_description']) ) ? $_POST['sm_description'] : null;
-		$post['sm_image_cover'] = ( isset($_FILES['sm_image_cover']) && $_FILES['sm_image_cover']['error'] == 0 && $_FILES['sm_image_cover']['size'] > 0 ) ? $_FILES['sm_image_cover'] : null;
+		$post['sm_image_cover'] = ( isset($_FILES['sm_image_cover']) && !empty($_FILES['sm_image_cover']) ) ? $_FILES['sm_image_cover'] : null;
 
 		$labels = [];
 
 		if ( is_null($post['title']) || strlen($post['title']) < 5 )
-			array_push($labels, ['title', 'Escribe un título con más de 5 caracteres.']);
+		/*  */ array_push($labels, ['title', 'Escribe un título con más de 5 caracteres.']);
 
 		if ( is_null($post['description']) || strlen($post['description']) < 20 )
-			array_push($labels, ['description', 'Escribe una descripción más larga de 20 caracteres.']);
+		/*  */ array_push($labels, ['description', 'Escribe una descripción más larga de 20 caracteres.']);
 
 		if ( $edit == false )
 		{
-			if ( is_null($post['image_cover']) )
-				array_push($labels, ['image_cover', 'Debes poner una imágen de portada.']);
+			$__valid = Upload::validate_file($post['image_cover'], ['jpg', 'jpeg', 'png']);
+			if ( $__valid['status'] === 'ERROR' )
+			/*  */ array_push($labels, ['image_cover', $__valid['message']]);
+
+			if ( !empty($post['sm_image_cover']['name']) )
+			{
+				$__valid = Upload::validate_file($post['sm_image_cover'], ['jpg', 'jpeg', 'png']);
+				if ( $__valid['status'] === 'ERROR' )
+				/*  */ array_push($labels, ['sm_image_cover', $__valid['message']]);
+			}
 		}
 
 		if ( !empty($labels) )
 		{
 			return [
-				'status' => 'error',
+				'status' => 'ERROR',
 				'labels' => $labels
 			];
 		}
@@ -67,19 +75,22 @@ class Blog_controller extends Controller
 		{
 			$response = $this->validate_article();
 
-			if ( $response['status'] == 'error' )
+			if ( $response['status'] == 'ERROR' )
 			{
-				echo json_encode($response, JSON_PRETTY_PRINT);
+				echo json_encode([
+					'status' => 'error',
+					'labels' => $response['labels']
+				], JSON_PRETTY_PRINT);
 			}
 			else
 			{
 				$response = $this->model->save_article( $response['post'] );
 
-				if ( $response['status'] == 'error' )
+				if ( $response['status'] == 'fatal_error' )
 				{
 					echo json_encode([
-						'status' => 'error',
-						'labels' => $response['labels']
+						'status' => 'fatal_error',
+						'message' => $response['message']
 					], JSON_PRETTY_PRINT);
 				}
 				else
@@ -115,9 +126,12 @@ class Blog_controller extends Controller
 				{
 					$response = $this->validate_article(true);
 
-					if ( $response['status'] == 'error' )
+					if ( $response['status'] == 'ERROR' )
 					{
-						echo json_encode($response, JSON_PRETTY_PRINT);
+						echo json_encode([
+							'status' => 'error',
+							'labels' => $response['labels']
+						], JSON_PRETTY_PRINT);
 					}
 					else
 					{
@@ -125,11 +139,11 @@ class Blog_controller extends Controller
 
 						$response = $this->model->save_article( $response['post'], true );
 
-						if ( $response['status'] == 'error' )
+						if ( $response['status'] == 'fatal_error' )
 						{
 							echo json_encode([
-								'status' => 'error',
-								'labels' => $response['labels']
+								'status' => 'fatal_error',
+								'message' => $response['message']
 							], JSON_PRETTY_PRINT);
 						}
 						else
@@ -153,10 +167,10 @@ class Blog_controller extends Controller
 				}
 			}
 			else
-				Errors::http('404');
+			/*  */ Errors::http('404');
 		}
 		else
-			Errors::http('404');
+		/*  */ Errors::http('404');
 	}
 
 	public function delete_article()
@@ -194,10 +208,10 @@ class Blog_controller extends Controller
 			$labels = [];
 
 			if ( is_null($post['category']) )
-				array_push($labels, ['category', 'Debes escribir el nombre de la categoría.']);
+			/*  */ array_push($labels, ['category', 'Debes escribir el nombre de la categoría.']);
 
 			if ( is_null($post['description']) )
-				array_push($labels, ['description', 'Escribe una pequeña descripción.']);
+			/*  */ array_push($labels, ['description', 'Escribe una pequeña descripción.']);
 
 			if ( !empty($labels) )
 			{
@@ -217,7 +231,7 @@ class Blog_controller extends Controller
 			}
 		}
 		else
-			Errors::http('404');
+		/*  */ Errors::http('404');
 	}
 
 	public function delete_category()

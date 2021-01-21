@@ -35,14 +35,14 @@ class Blog_model extends Model
 	public function get_article( $id = null )
 	{
 		if ( is_null($id) )
-			return null;
+		/*  */ return null;
 
 		$response = $this->database->select("blog", [
 			'url',
 			'title [Object]',
 			'id_category',
 			'image',
-			'article [JSON]',
+			'article [Object]',
 			'sm_title [Object]',
 			'sm_description [Object]',
 			'sm_image',
@@ -66,7 +66,7 @@ class Blog_model extends Model
 	public function create_category( $data = null )
 	{
 		if ( is_null($data) )
-			return null;
+		/*  */ return null;
 
 		$this->database->insert('blog_categories', [
 			'category' => [ Configuration::$lang_default => $data['category'] ],
@@ -77,102 +77,50 @@ class Blog_model extends Model
 	public function save_article( $data = [], $edit = false )
 	{
 		if ( empty($data) )
-			return null;
+		/*  */ return null;
+
+		$config_uploads = [
+			'path_uploads' => PATH_UPLOADS,
+			'set_name' => 'FILE_NAME_LAST_RANDOM'
+		];
+
+		$save = [
+			'title' => [ Configuration::$lang_default => $data['title'] ],
+			'id_category' => $data['category'],
+			'article' => [ Configuration::$lang_default => json_encode($data['description']) ],
+			'tags' => ( !is_null($data['tags']) ) ? explode(',', trim($data['tags'], ',')) : null,
+			'author' => Session::get_value('_vkye_id_user'),
+			'sm_title' => [ Configuration::$lang_default => $data['sm_title'] ],
+			'sm_description' => [ Configuration::$lang_default => $data['sm_description'] ]
+		];
+
+		if ( !empty($data['image_cover']['name']) )
+		{
+			$data['image_cover'] = Upload::upload_file($data['image_cover'], $config_uploads);
+			$save['image'] = $data['image_cover']['file'];
+		}
+
+		if ( !empty($data['sm_image_cover']['name']) )
+		{
+			$data['sm_image_cover'] = Upload::upload_file($data['sm_image_cover'], $config_uploads);
+			$save['sm_image'] = $data['sm_image_cover']['file'];
+		}
 
 		if ( $edit == false )
 		{
 			$data['url'] = $this->security->clean_string($data['title']);
 			$data['url'] = str_replace('_', '-', $data['url']);
-		}
-
-		$data['title'] = [ Configuration::$lang_default => $data['title'] ];
-		$data['description'] = json_encode([ Configuration::$lang_default => $data['description'] ]);
-		$data['tags'] = ( !is_null($data['tags']) ) ? explode(',', trim($data['tags'], ',')) : null;
-		$data['sm_title'] = [ Configuration::$lang_default => $data['sm_title'] ];
-		$data['sm_description'] = [ Configuration::$lang_default => $data['sm_description'] ];
-
-		$upload = new Upload();
-		$upload->set_valid_extensions(['jpeg', 'jpg', 'png']);
-
-		if ( !is_null($data['image_cover']) )
-		{
-			$upload->set_file_name(explode('.', $data['image_cover']['name'])[0] .'_'. $this->security->random_string(6) .'.'. explode('.', $data['image_cover']['name'])[1]);
-			$upload->set_temp_name($data['image_cover']['tmp_name']);
-			$upload->set_file_type($data['image_cover']['type']);
-			$upload->set_file_size($data['image_cover']['size']);
-
-			$image = $upload->copy();
-
-			if ( $image['status'] == 'success' )
-			{
-				$data['image_cover'] = $image['name'];
-				unset($image);
-			}
-			else
-			{
-				return [
-					'status' => 'error',
-					'labels' => [['image_cover', $image['message']]]
-				];
-			}
-		}
-
-		if ( !is_null($data['sm_image_cover']) )
-		{
-			$upload->set_file_name(explode('.', $data['sm_image_cover']['name'])[0] .'_'. $this->security->random_string(6) .'.'. explode('.', $data['sm_image_cover']['name'])[1]);
-			$upload->set_temp_name($data['sm_image_cover']['tmp_name']);
-			$upload->set_file_type($data['sm_image_cover']['type']);
-			$upload->set_file_size($data['sm_image_cover']['size']);
-
-			$image = $upload->copy();
-
-			if ( $image['status'] == 'success' )
-			{
-				$data['sm_image_cover'] = $image['name'];
-				unset($image);
-			}
-			else
-			{
-				return [
-					'status' => 'error',
-					'labels' => [['sm_image_cover', $image['message']]]
-				];
-			}
-		}
-
-		$save = [];
-		$save['title'] = $data['title'];
-		$save['id_category'] = $data['category'];
-		$save['article'] = $data['description'];
-		$save['sm_title'] = $data['sm_title'];
-		$save['sm_description'] = $data['sm_description'];
-		$save['tags'] = $data['tags'];
-		$save['author'] = Session::get_value('_vkye_id_user');
-
-		if ( $edit == false )
 			$save['url'] = $data['url'];
 
-		if ( !is_null($data['image_cover']) )
-			$save['image'] = $data['image_cover'];
-
-		if ( !is_null($data['sm_image_cover']) )
-			$save['sm_image'] = $data['sm_image_cover'];
-
-		if ( $edit == false )
-		{
 			$this->database->insert('blog', $save);
 
 			if ( $this->database->id() )
-			{
-				return [
-					'status' => 'OK'
-				];
-			}
+			/*  */ return [ 'status' => 'OK' ];
 			else
 			{
 				return [
-					'status' => 'error',
-					'labels' => [['title', 'Ocurrió un problema al guardar el artículo.']]
+					'status' => 'fatal_error',
+					'message' => 'Ocurrió un problema al guardar el artículo.'
 				];
 			}
 		}
@@ -183,9 +131,7 @@ class Blog_model extends Model
 				'id' => $data['id']
 			]);
 
-			return [
-				'status' => 'OK'
-			];
+			return [ 'status' => 'OK' ];
 		}
 	}
 
@@ -201,7 +147,7 @@ class Blog_model extends Model
 	public function delete_category( $data = null )
 	{
 		if ( is_null($data) )
-			return null;
+		/*  */ return null;
 
 		$this->database->delete('blog_categories', [
 			'id' => $data['id']

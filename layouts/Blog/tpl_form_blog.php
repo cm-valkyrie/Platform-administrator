@@ -50,7 +50,7 @@
 
             <div class="label">
                 <label>
-                    <textarea name="description"><?= ( isset($article) ) ? $article['article'][Configuration::$lang_default] : '' ?></textarea>
+                    <textarea name="description"><?= ( isset($article) ) ? json_decode($article['article'][Configuration::$lang_default]) : '' ?></textarea>
                 </label>
             </div>
         </div>
@@ -69,6 +69,8 @@
                     <div class="upload_image_preview">
                         <?php if ( isset($article) ): ?>
                             <figure class="m-0"><img class="img-fluid" src="{$path.root_uploads}<?= $article['image'] ?>"></figure>
+                        <?php else: ?>
+                            <figure class="m-0"><img class="img-fluid" src="{$path.images}upload-file.svg"></figure>
                         <?php endif; ?>
                         <span class="d-block">Elegir imágen</span>
                         <input type="file" name="image_cover" accept="image/*" />
@@ -109,6 +111,8 @@
                             <div class="upload_image_preview">
                                 <?php if ( isset($article) && !empty($article['sm_image']) ): ?>
                                     <figure class="m-0"><img class="img-fluid" src="{$path.root_uploads}<?= $article['sm_image'] ?>"></figure>
+                                <?php else: ?>
+                                    <figure class="m-0"><img class="img-fluid" src="{$path.images}upload-file.svg"></figure>
                                 <?php endif; ?>
                                 <span class="d-block">Elegir imágen</span>
                                 <input type="file" name="sm_image_cover" accept="image/*" />

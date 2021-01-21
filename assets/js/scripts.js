@@ -112,26 +112,25 @@
         });
     },
 
-    app.prototype.uploadImagePreview = function ( add_temp = null, callback )
+    app.prototype.uploadImagePreview = function ()
     {
         $( document ).on('change', '.upload_image_preview > input[type="file"]', function ()
         {
             let self = $(this);
             let container = self.parents('.upload_image_preview');
 
+            container.find('.loading').remove();
+            container.prepend('<div class="loading elm-stretched d-flex flex-column justify-content-center align-items-center"><div class="loading-data-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div>');
+
             if ( self[0].files[0] )
             {
-                let data = {
-                    image: self[0].files[0]
-                };
-
-                if ( add_temp !== null && typeof add_temp !== 'undefined' ) data.add_temp = true;
-
                 let ajax = $(document).ajaxSubmit({
                     url: 'index.php?c=System&m=validate_image',
                     typeSend: 'manual',
                     disableButton: false,
-                    data: data,
+                    data: {
+                        image: self[0].files[0]
+                    },
                     callback: function( response )
                     {
                         if ( response.status == 'OK' )
@@ -140,34 +139,34 @@
 
                             reader.onload = function (e)
                             {
-                                if ( typeof callback === 'function' )
-                                {
-                                    callback( e.target.result, response.token )
-                                }
-                                else
-                                {
-                                    container.find('> figure').remove();
-                                    container.prepend('<figure class="m-0"><img class="img-fluid" src="'+ e.target.result +'" /></figure>');
-                                }
+                                self[0].dispatchEvent( new CustomEvent('imageIsValid', {bubbles: true, detail: {self: self, container: container, image: e.target.result, token: response.token}}) )
                             };
 
                             reader.readAsDataURL(self[0].files[0]);
                         }
 
                         if ( response.status == 'fatal_error' )
+                        {
                             alertify.error(response.message);
+
+                            self[0].dispatchEvent( new CustomEvent('imageIsInvalid', {bubbles: true, detail: {self: self, container: container}}) )
+                        }
                     }
                 });
 
                 ajax.send();
             }
+
+            setTimeout(function ()
+            {
+                container.find('.loading').remove();
+            }, 500);
         });
 
-        $( document ).on('click', '.upload_image_preview > .btn', function ()
+        $( document ).on('click', '.upload_image_preview > .btn[delete-elm]', function ()
         {
             let button = $(this);
-            let container = button.parents('[data-token]');
-            let token = container.data('token');
+            let container = button.parents('.upload_image_preview');
 
             swal({
                 text: '¿Deseas eliminar la imágen de la galería?',
@@ -183,14 +182,12 @@
                 {
                     return new Promise(function (resolve)
                     {
-                        $.post('index.php?c=System&m=delete_preloaded_image', { token: token }, function(data, status, jqXHR)
+                        container.remove();
+
+                        setTimeout(function ()
                         {
-                            container.remove();
-                            setTimeout(function ()
-                            {
-                                resolve();
-                            }, 200);
-                        });
+                            resolve();
+                        }, 200);
                     });
                 }
             });
@@ -231,10 +228,6 @@
             insertdatetime_formats: ["%H:%M:%S", "%d-%m-%Y", "%I:%M:%S %p", "%D"],
             insertdatetime_element: true
         });
-    },
-
-    app.prototype.test = function ()
-    {
     },
 
     app.prototype.init = function ()
